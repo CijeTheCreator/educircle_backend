@@ -3,7 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 import { routes } from "./routes";
-import { errorMiddleware } from "./middlewares/error.middleware";
+// import { errorMiddleware } from "./middlewares/error.middleware";
 
 // Create Express application
 const app = express();
@@ -24,6 +24,6 @@ app.get("/health", (req, res) => {
 });
 
 // Apply error handling middleware
-app.use(errorMiddleware);
+// app.use(errorMiddleware);
 
 export { app };
