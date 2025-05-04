@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: EduCircle Mentorship API
+  version: 1.0.0
+  description: API for managing mentorships within EduCircle
+
+paths:
+  /api/mentorships:
+    post:
+      summary: Create a new mentorship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMentorshipInput"
+      responses:
+        "201":
+          description: Mentorship created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipResponse"
+
+    get:
+      summary: Get all mentorships with optional filters
+      parameters:
+        - in: query
+          name: userId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: menteeId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: mentorId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/MentorshipStatus"
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: offset
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of mentorships
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipListResponse"
+
+  /api/mentorships/user/{userId}:
+    get:
+      summary: Get mentorships where user is mentor or mentee
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of mentorships for user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipListResponse"
+
+  /api/mentorships/{id}:
+    get:
+      summary: Get a mentorship by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Mentorship found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipResponse"
+        "404":
+          description: Mentorship not found
+
+  /api/mentorships/{id}/{action}:
+    patch:
+      summary: Update mentorship status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: action
+          required: true
+          schema:
+            type: string
+            enum: [approve, deny, accept, reject, cancel, suspend]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMentorshipStatusInput"
+      responses:
+        "200":
+          description: Mentorship updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipResponse"
+
+components:
+  schemas:
+    MentorshipStatus:
+      type: string
+      enum:
+        [REQUESTED, APPROVED, DENIED, ACCEPTED, REJECTED, CANCELLED, SUSPENDED]
+
+    CreateMentorshipInput:
+      type: object
+      properties:
+        menteeId:
+          type: string
+          format: uuid
+        mentorId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        note:
+          type: string
+      required: [menteeId, mentorId, userId]
+
+    UpdateMentorshipStatusInput:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/MentorshipStatus"
+        note:
+          type: string
+
+    Mentorship:
+      type: object
+      properties:
+        id:
+          type: string
+        menteeId:
+          type: string
+        mentorId:
+          type: string
+        userId:
+          type: string
+        status:
+          $ref: "#/components/schemas/MentorshipStatus"
+        note:
+          type: string
+        mentee:
+          type: object
+        mentor:
+          type: object
+        user:
+          type: object
+
+    MentorshipResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          $ref: "#/components/schemas/Mentorship"
+
+    MentorshipListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Mentorship"
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer

@@ -1,0 +1,152 @@
+// This is your Prisma schema file
+// Learn more about it at https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MENTEE
+  MENTOR
+  ADMIN
+}
+
+enum UserState {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum SessionState {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum MentorshipStatus {
+  REQUESTED
+  APPROVED
+  DENIED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  SUSPENDED
+}
+
+enum NotificationState {
+  READ
+  UNREAD
+}
+
+model User {
+  id        String    @id @default(uuid())
+  firstName String
+  lastName  String
+  initials  String
+  email     String    @unique
+  phone     String?
+  location  String?
+  role      UserRole
+  state     UserState @default(ACTIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  mentorships     Mentorship[]     @relation("UserMentorships")
+  menteeRelations Mentorship[]     @relation("Mentee")
+  mentorRelations Mentorship[]     @relation("Mentor")
+  sessions        Session[]        @relation("SessionParticipants")
+  createdSessions Session[]        @relation("SessionCreator")
+  notifications   Notification[]
+  progressReports ProgressReport[] @relation("ProgressReportUser")
+  menteeReports   ProgressReport[] @relation("Mentee")
+  mentorReports   ProgressReport[] @relation("Mentor")
+  resources       Resource[]
+}
+
+model Session {
+  id        String       @id @default(uuid())
+  title     String
+  time      DateTime
+  date      DateTime
+  state     SessionState @default(SCHEDULED)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relations
+  userId String // Creator of the session
+  user   User   @relation("SessionCreator", fields: [userId], references: [id])
+  users  User[] @relation("SessionParticipants")
+}
+
+model Mentorship {
+  id            String           @id @default(uuid())
+  requestedDate DateTime         @default(now())
+  note          String?
+  status        MentorshipStatus @default(REQUESTED)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  menteeId String
+  mentee   User   @relation("Mentee", fields: [menteeId], references: [id])
+  mentorId String
+  mentor   User   @relation("Mentor", fields: [mentorId], references: [id])
+  userId   String // User who created the mentorship
+  user     User   @relation("UserMentorships", fields: [userId], references: [id])
+}
+
+model Notification {
+  id         String            @id @default(uuid())
+  subject    String
+  timePosted DateTime          @default(now())
+  state      NotificationState @default(UNREAD)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model ProgressReport {
+  id         String   @id @default(uuid())
+  title      String
+  skills     String[]
+  ratings    Int[]
+  stars      Int
+  reportBody String
+  date       DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  menteeId String
+  mentee   User   @relation("Mentee", fields: [menteeId], references: [id])
+  mentorId String
+  mentor   User   @relation("Mentor", fields: [mentorId], references: [id])
+  userId   String // User who created the report
+  user     User   @relation("ProgressReportUser", fields: [userId], references: [id])
+}
+
+model Resource {
+  id        String   @id @default(uuid())
+  title     String
+  fileLink  String
+  tags      String[]
+  type      String
+  author    String
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}

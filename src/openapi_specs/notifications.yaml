@@ -1,0 +1,243 @@
+openapi: 3.0.0
+info:
+  title: EduCircle Notification API
+  version: 1.0.0
+  description: API for managing user notifications in EduCircle.
+
+servers:
+  - url: http://localhost:3000/api/notifications
+
+paths:
+  /:
+    post:
+      summary: Create a new notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotification"
+      responses:
+        201:
+          description: Notification created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+
+    get:
+      summary: Get all notifications with optional filters
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [READ, UNREAD]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: A list of notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+  /user/{userId}:
+    get:
+      summary: Get all notifications for a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Notifications for user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+    post:
+      summary: Mark all notifications as read for a user
+      operationId: markAllRead
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+
+  /{id}:
+    get:
+      summary: Get a specific notification by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A single notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+        404:
+          description: Notification not found
+
+    patch:
+      summary: Update a notification's state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotification"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Notification updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+
+  /{id}/read:
+    patch:
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+
+  /{id}/unread:
+    patch:
+      summary: Mark a notification as unread
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Notification marked as unread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+
+components:
+  schemas:
+    CreateNotification:
+      type: object
+      required:
+        - subject
+        - userId
+      properties:
+        subject:
+          type: string
+        userId:
+          type: string
+          format: uuid
+
+    UpdateNotification:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum: [READ, UNREAD]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        state:
+          type: string
+        userId:
+          type: string
+        timePosted:
+          type: string
+          format: date-time
+        user:
+          type: object
+          additionalProperties: true
+
+    NotificationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          $ref: "#/components/schemas/Notification"
+
+    NotificationListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer

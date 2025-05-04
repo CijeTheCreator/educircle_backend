@@ -1,0 +1,232 @@
+openapi: 3.0.3
+info:
+  title: EduCircle Sessions API
+  description: API for managing EduCircle learning sessions
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /sessions:
+    post:
+      summary: Create a new session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionInput"
+      responses:
+        "201":
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+    get:
+      summary: Get all sessions with optional filters
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: state
+          schema:
+            $ref: "#/components/schemas/SessionState"
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionListResponse"
+
+  /sessions/user/{userId}:
+    get:
+      summary: Get sessions for a specific user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of user sessions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionListResponse"
+
+  /sessions/{id}:
+    get:
+      summary: Get a specific session by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: includeUsers
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Session found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "404":
+          description: Session not found
+
+    put:
+      summary: Update (reschedule) a session
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSessionInput"
+      responses:
+        "200":
+          description: Session updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+
+  /sessions/{id}/cancel:
+    patch:
+      summary: Cancel a session
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+
+components:
+  schemas:
+    SessionState:
+      type: string
+      enum: [SCHEDULED, COMPLETED, CANCELLED, RESCHEDULED]
+
+    CreateSessionInput:
+      type: object
+      required: [title, date, time, userId]
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          format: time
+        userId:
+          type: string
+          format: uuid
+        userIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    UpdateSessionInput:
+      type: object
+      required: [title, date, time]
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          format: time
+        state:
+          $ref: "#/components/schemas/SessionState"
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          format: time
+        state:
+          $ref: "#/components/schemas/SessionState"
+        userId:
+          type: string
+          format: uuid
+        user:
+          type: object
+          nullable: true
+        users:
+          type: array
+          items:
+            type: object
+
+    SessionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          $ref: "#/components/schemas/Session"
+
+    SessionListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer

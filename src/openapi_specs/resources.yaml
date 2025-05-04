@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: EduCircle Resources API
+  description: API for managing educational resources in EduCircle
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /resources:
+    post:
+      summary: Create a new resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResourceInput"
+      responses:
+        "201":
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+    get:
+      summary: Get all resources with optional filters
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: tags
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedResourceResponse"
+
+  /resources/user/{userId}:
+    get:
+      summary: Get resources by user ID
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User's resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceListResponse"
+
+  /resources/tag/{tag}:
+    get:
+      summary: Get resources by tag
+      parameters:
+        - in: path
+          name: tag
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resources with the tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceListResponse"
+
+  /resources/type/{type}:
+    get:
+      summary: Get resources by type
+      parameters:
+        - in: path
+          name: type
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resources with the type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceListResponse"
+
+  /resources/{id}:
+    get:
+      summary: Get a resource by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "404":
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      summary: Update a resource by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResourceInput"
+      responses:
+        "200":
+          description: Resource updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+
+components:
+  schemas:
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        fileLink:
+          type: string
+          format: uri
+        tags:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+        author:
+          type: string
+        date:
+          type: string
+          format: date-time
+        userId:
+          type: string
+        user:
+          type: object
+          additionalProperties: true
+
+    CreateResourceInput:
+      allOf:
+        - $ref: "#/components/schemas/Resource"
+      required:
+        - title
+        - fileLink
+        - tags
+        - type
+        - author
+        - date
+        - userId
+
+    UpdateResourceInput:
+      type: object
+      properties:
+        title:
+          type: string
+        fileLink:
+          type: string
+          format: uri
+        tags:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+        author:
+          type: string
+        date:
+          type: string
+          format: date-time
+
+    ResourceResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          $ref: "#/components/schemas/Resource"
+
+    ResourceListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resource"
+
+    PaginatedResourceResponse:
+      allOf:
+        - $ref: "#/components/schemas/ResourceListResponse"
+        - type: object
+          properties:
+            meta:
+              type: object
+              properties:
+                total:
+                  type: integer
+                limit:
+                  type: integer
+                offset:
+                  type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string

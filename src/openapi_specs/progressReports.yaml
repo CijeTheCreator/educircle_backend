@@ -1,0 +1,290 @@
+openapi: 3.0.3
+info:
+  title: EduCircle Progress Report API
+  version: 1.0.0
+  description: API for managing progress reports in EduCircle
+
+paths:
+  /api/progress-reports:
+    post:
+      summary: Create a new progress report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProgressReport'
+      responses:
+        '201':
+          description: Progress report created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressReportResponse'
+    get:
+      summary: Get progress reports with optional filters
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: menteeId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: mentorId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of progress reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressReportsListResponse'
+
+  /api/progress-reports/user/{userId}:
+    get:
+      summary: Get progress reports for a user (as creator, mentee, or mentor)
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User's progress reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressReportsListResponse'
+
+  /api/progress-reports/mentee/{menteeId}:
+    get:
+      summary: Get progress reports for a mentee
+      parameters:
+        - in: path
+          name: menteeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Mentee's progress reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressReportsListResponse'
+
+  /api/progress-reports/mentor/{mentorId}:
+    get:
+      summary: Get progress reports for a mentor
+      parameters:
+        - in: path
+          name: mentorId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Mentor's progress reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressReportsListResponse'
+
+  /api/progress-reports/{id}:
+    get:
+      summary: Get a progress report by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        responses:
+          '200':
+            description: Progress report found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProgressReportResponse'
+          '404':
+            description: Progress report not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update a progress report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProgressReport'
+      responses:
+        '200':
+          description: Updated progress report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressReportResponse'
+
+components:
+  schemas:
+    CreateProgressReport:
+      type: object
+      required:
+        - title
+        - reportBody
+        - skills
+        - ratings
+        - stars
+        - date
+        - menteeId
+        - mentorId
+        - userId
+      properties:
+        title:
+          type: string
+        reportBody:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        ratings:
+          type: array
+          items:
+            type: number
+            minimum: 1
+            maximum: 5
+        stars:
+          type: number
+          minimum: 1
+          maximum: 5
+        date:
+          type: string
+          format: date-time
+        menteeId:
+          type: string
+          format: uuid
+        mentorId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+
+    UpdateProgressReport:
+      type: object
+      properties:
+        title:
+          type: string
+        reportBody:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        ratings:
+          type: array
+          items:
+            type: number
+            minimum: 1
+            maximum: 5
+        stars:
+          type: number
+          minimum: 1
+          maximum: 5
+        date:
+          type: string
+          format: date-time
+
+    ProgressReport:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        reportBody:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        ratings:
+          type: array
+          items:
+            type: number
+        stars:
+          type: number
+        date:
+          type: string
+          format: date-time
+        mentee:
+          type: object
+        mentor:
+          type: object
+        user:
+          type: object
+
+    ProgressReportResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          $ref: '#/components/schemas/ProgressReport'
+
+    ProgressReportsListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgressReport'
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
