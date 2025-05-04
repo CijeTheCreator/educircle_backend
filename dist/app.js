@@ -9,7 +9,7 @@ const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const helmet_1 = __importDefault(require("helmet"));
 const routes_1 = require("./routes");
-// import { errorMiddleware } from "./middlewares/error.middleware";
+const error_middleware_1 = require("./middlewares/error.middleware");
 // Create Express application
 const app = (0, express_1.default)();
 exports.app = app;
@@ -25,3 +25,5 @@ app.use("/api", routes_1.routes);
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "OK", message: "EduCircle API is running" });
 });
+// Apply error handling middleware
+app.use(error_middleware_1.errorMiddleware);
